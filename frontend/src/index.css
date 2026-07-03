@@ -1,0 +1,134 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #6366F1;
+  --color-secondary: #8B5CF6;
+  --color-accent: #06B6D4;
+  --color-bg: #0F172A;
+  --color-card: rgba(255,255,255,0.08);
+  --color-border: rgba(255,255,255,0.12);
+  --text-primary: #FFFFFF;
+  --text-secondary: #CBD5E1;
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html, body, #root { height: 100%; }
+  body {
+    background: var(--color-bg);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    overflow-x: hidden;
+  }
+  h1,h2,h3,h4 { font-family: Poppins, sans-serif; }
+  .font-caveat { font-family: Caveat, cursive; }
+  .font-script { font-family: 'Dancing Script', cursive; }
+
+  button, input, textarea, select {
+    @apply outline-none;
+  }
+  button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+    @apply ring-2 ring-sky-400 ring-offset-2 ring-offset-slate-900;
+  }
+}
+
+/* Selection */
+::selection { background: var(--color-accent); color: #fff; }
+
+/* Glass card — for dark/video backgrounds */
+.glass-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04));
+  border: 1px solid var(--color-border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Light glass card — white sections */
+.glass-card-light {
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(255,255,255,0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Button gradient */
+.btn-gradient {
+  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+  box-shadow: 0 8px 30px rgba(99,102,241,0.14);
+}
+
+/* ─── Global Video Background ─────────────────────────────── */
+.video-bg-wrapper {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.video-bg-wrapper video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  will-change: transform;
+}
+.video-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(2, 6, 23, 0.82) 0%,
+    rgba(2, 6, 23, 0.72) 45%,
+    rgba(15, 23, 42, 0.80) 100%
+  );
+}
+
+/* Responsive typography helpers */
+.hero-title { font-size: clamp(2rem, 5vw, 4rem); line-height: 1.04; }
+.hero-sub { font-size: clamp(1rem, 2.4vw, 1.25rem); }
+
+/* ─── Dolphy Animations ───────────────────────────────────── */
+@keyframes dolphy-float { 0%{ transform: translateY(0);} 50%{ transform: translateY(-8px);} 100%{ transform: translateY(0);} }
+@keyframes dolphy-blink { 0%,90%,100%{ opacity:1;} 95%{ opacity:0.2;} }
+@keyframes dolphy-pulse { 0%,100%{ transform: scale(1);} 50%{ transform: scale(1.08);} }
+@keyframes badge-pop { 0%{ transform: scale(0);} 70%{ transform: scale(1.15);} 100%{ transform: scale(1);} }
+
+.dolphy { animation: dolphy-float 4s ease-in-out infinite; }
+.dolphy .eye { animation: dolphy-blink 6s linear infinite; }
+.dolphy-badge { animation: dolphy-pulse 2.2s ease-in-out infinite; }
+.badge-pop { animation: badge-pop 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
+
+/* ─── Scrollbar ───────────────────────────────────────────── */
+.scrollbar-thin::-webkit-scrollbar { width: 5px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.25); border-radius: 999px; }
+.scrollbar-thin::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.45); }
+
+/* ─── Safe Areas (mobile notches) ────────────────────────── */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .safe-top { padding-top: env(safe-area-inset-top); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+}
+
+/* ─── Mobile video performance ───────────────────────────── */
+@media (max-width: 640px) {
+  .video-bg-wrapper video {
+    transform: scale(1.03);
+  }
+}
+
+/* ─── Page card — glass effect for content sections ─────── */
+.page-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.09);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 1.5rem;
+}
