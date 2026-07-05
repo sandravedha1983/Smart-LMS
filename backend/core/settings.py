@@ -11,7 +11,10 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-default-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost').split(',')
+ALLOWED_HOSTS = os.getenv(
+    "ALLOWED_HOSTS",
+    "smart-lms-kq6g.onrender.com,localhost,127.0.0.1"
+).split(",")
 
 # Application definition
 INSTALLED_APPS = [
