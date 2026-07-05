@@ -2,8 +2,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 from decouple import config
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+import dj_database_url
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -37,6 +36,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware', # CORS middleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -67,10 +67,10 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 # Database
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600
+    )
 }
 
 # Password validation
@@ -105,8 +105,22 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
+# Frontend URL Configuration
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000').rstrip('/')
+
 # CORS Configuration
-CORS_ALLOW_ALL_ORIGINS = True # Change to specific origins in production
+CORS_ALLOWED_ORIGINS = [
+    FRONTEND_URL,
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+]
+
+# CSRF Configuration
+CSRF_TRUSTED_ORIGINS = [
+    FRONTEND_URL,
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+]
 
 # DRF Spectacular Configuration
 SPECTACULAR_SETTINGS = {
