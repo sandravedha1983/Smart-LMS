@@ -110,6 +110,8 @@ SIMPLE_JWT = {
 
 # Frontend URL Configuration
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000').rstrip('/')
+if not FRONTEND_URL.startswith('http://') and not FRONTEND_URL.startswith('https://'):
+    FRONTEND_URL = 'https://' + FRONTEND_URL
 
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = [
