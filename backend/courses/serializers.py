@@ -35,20 +35,36 @@ class UserProfileSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('approved', 'points', 'learning_streak', 'total_learning_time', 'ai_interactions', 'puzzle_points', 'puzzle_streak', 'last_puzzle_solved_date')
 
+from django.contrib.auth.password_validation import validate_password
+
 class UserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+    confirm_password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
     role = serializers.ChoiceField(choices=[('student', 'Student'), ('professor', 'Professor')], default='student', write_only=True)
     preferred_language = serializers.CharField(default='English', write_only=True)
     preferred_difficulty = serializers.CharField(default='Beginner', write_only=True)
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'password', 'role', 'preferred_language', 'preferred_difficulty')
+        fields = ('id', 'username', 'email', 'password', 'confirm_password', 'role', 'preferred_language', 'preferred_difficulty')
+
+    def validate(self, data):
+        if data.get('password') != data.get('confirm_password'):
+            raise serializers.ValidationError({"password": "Passwords do not match."})
+        
+        # Validate password against Django's validators (which checks length etc.)
+        try:
+            validate_password(data.get('password'))
+        except serializers.ValidationError as e:
+            raise serializers.ValidationError({"password": list(e.messages)})
+
+        return data
 
     def create(self, validated_data):
         role = validated_data.pop('role', 'student')
         preferred_language = validated_data.pop('preferred_language', 'English')
         preferred_difficulty = validated_data.pop('preferred_difficulty', 'Beginner')
+        validated_data.pop('confirm_password', None) # Remove it before passing to create_user
 
         user = User.objects.create_user(
             username=validated_data['username'],

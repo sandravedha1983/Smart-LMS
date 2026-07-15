@@ -18,7 +18,10 @@ export default function LoginPage() {
     try {
       await login(form);
     } catch (err) {
-      setServerError(err?.response?.data?.detail || 'Invalid username or password.');
+      const errMessage = err?.response?.data?.detail || 
+        err?.response?.data?.non_field_errors?.[0] || 
+        (err.response ? 'Invalid username or password.' : `Network Error: ${err.message}`);
+      setServerError(errMessage);
     }
   };
 

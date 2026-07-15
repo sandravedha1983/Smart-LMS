@@ -5,7 +5,7 @@ import AuthForm from '../components/AuthForm';
 
 export default function RegisterPage() {
   const { register, loading, error } = useAuth();
-  const [form, setForm] = useState({ username: '', email: '', password: '', role: 'student' });
+  const [form, setForm] = useState({ username: '', email: '', password: '', confirm_password: '', role: 'student' });
   const [serverError, setServerError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -17,16 +17,23 @@ export default function RegisterPage() {
     event.preventDefault();
     setServerError('');
     setSuccess('');
+    
+    if (form.password !== form.confirm_password) {
+      setServerError('Passwords do not match.');
+      return;
+    }
+
     try {
       await register(form);
       setSuccess('Registration successful. Please log in.');
     } catch (err) {
-      setServerError(
-        err?.response?.data?.username?.[0] ||
+      const errMessage = err?.response?.data?.username?.[0] ||
         err?.response?.data?.email?.[0] ||
         err?.response?.data?.password?.[0] ||
-        'Registration failed. Please try again.'
-      );
+        err?.response?.data?.non_field_errors?.[0] ||
+        err?.response?.data?.detail ||
+        (err.response ? 'Registration failed. Please try again.' : `Network Error: ${err.message}`);
+      setServerError(errMessage);
     }
   };
 
@@ -71,6 +78,11 @@ export default function RegisterPage() {
                 name: 'password',
                 label: 'Password',
                 inputProps: { type: 'password', placeholder: 'Create a strong password', required: true }
+              },
+              {
+                name: 'confirm_password',
+                label: 'Confirm Password',
+                inputProps: { type: 'password', placeholder: 'Confirm your password', required: true }
               },
               {
                 name: 'role',
