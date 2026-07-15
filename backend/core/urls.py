@@ -3,8 +3,13 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+from .views import landing_page, health_check
 
 urlpatterns = [
+    # Landing & Health
+    path('', landing_page, name='landing-page'),
+    path('health/', health_check, name='health-check'),
+
     path('admin/', admin.site.urls),
     
     # API V1 Endpoints
