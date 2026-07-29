@@ -7,14 +7,22 @@ import { getAccessToken, getRefreshToken, setTokens, setAccessToken, clearTokens
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [accessToken, setAccessTokenState] = useState(getAccessToken());
-  const [refreshToken, setRefreshTokenState] = useState(getRefreshToken());
+  const [accessToken, setAccessTokenState] = useState(null);
+  const [refreshToken, setRefreshTokenState] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isMounted, setIsMounted] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
+    setAccessTokenState(getAccessToken());
+    setRefreshTokenState(getRefreshToken());
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
     if (!accessToken) {
       clearTokens();
       setProfile(null);
@@ -23,7 +31,7 @@ export function AuthProvider({ children }) {
     if (!profile) {
       fetchProfile();
     }
-  }, [accessToken]);
+  }, [accessToken, isMounted]);
 
   const fetchProfile = async () => {
     try {
@@ -88,6 +96,10 @@ export function AuthProvider({ children }) {
   };
 
   const isAuthenticated = useMemo(() => Boolean(accessToken), [accessToken]);
+
+  if (!isMounted) {
+    return null; // Prevent hydration mismatches by delaying render until client-side is ready
+  }
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, accessToken, profile, loading, error, login, register, refreshSession, logout, fetchProfile }}>

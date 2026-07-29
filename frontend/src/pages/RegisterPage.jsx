@@ -27,12 +27,26 @@ export default function RegisterPage() {
       await register(form);
       setSuccess('Registration successful. Please log in.');
     } catch (err) {
-      const errMessage = err?.response?.data?.username?.[0] ||
-        err?.response?.data?.email?.[0] ||
-        err?.response?.data?.password?.[0] ||
-        err?.response?.data?.non_field_errors?.[0] ||
-        err?.response?.data?.detail ||
-        (err.response ? 'Registration failed. Please try again.' : `Network Error: ${err.message}`);
+      let errMessage = 'Registration failed. Please try again.';
+      if (err?.response?.data) {
+        if (typeof err.response.data === 'string') {
+          errMessage = err.response.data;
+        } else if (err.response.data.username) {
+          errMessage = err.response.data.username[0];
+        } else if (err.response.data.email) {
+          errMessage = err.response.data.email[0];
+        } else if (err.response.data.password) {
+          errMessage = err.response.data.password[0];
+        } else if (err.response.data.non_field_errors) {
+          errMessage = err.response.data.non_field_errors[0];
+        } else if (err.response.data.detail) {
+          errMessage = err.response.data.detail;
+        } else {
+          errMessage = JSON.stringify(err.response.data);
+        }
+      } else if (err.message) {
+        errMessage = `Network Error: ${err.message}`;
+      }
       setServerError(errMessage);
     }
   };

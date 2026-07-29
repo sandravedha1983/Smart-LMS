@@ -18,9 +18,20 @@ export default function LoginPage() {
     try {
       await login(form);
     } catch (err) {
-      const errMessage = err?.response?.data?.detail || 
-        err?.response?.data?.non_field_errors?.[0] || 
-        (err.response ? 'Invalid username or password.' : `Network Error: ${err.message}`);
+      let errMessage = 'Invalid username or password.';
+      if (err?.response?.data) {
+        if (typeof err.response.data === 'string') {
+          errMessage = err.response.data;
+        } else if (err.response.data.detail) {
+          errMessage = err.response.data.detail;
+        } else if (err.response.data.non_field_errors) {
+          errMessage = err.response.data.non_field_errors[0];
+        } else {
+          errMessage = JSON.stringify(err.response.data);
+        }
+      } else if (err.message) {
+        errMessage = `Network Error: ${err.message}`;
+      }
       setServerError(errMessage);
     }
   };
