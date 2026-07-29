@@ -165,6 +165,12 @@ def process_transcription(lesson_id):
                     lesson.transcription_error = None
                     lesson.save(update_fields=['transcript', 'transcription_status', 'transcribed_at', 'transcription_error'])
                     logger.info(f"Successfully fetched YouTube transcript for Lesson ID: {lesson_id}")
+                    try:
+                        from ai_features.content_generator import generate_lesson_content
+                        logger.info(f"Triggering AI content generation for Lesson ID: {lesson_id}")
+                        generate_lesson_content(lesson_id)
+                    except Exception as e:
+                        logger.error(f"Failed to start AI generation: {str(e)}")
                     return
 
                 except Exception as e:
@@ -279,6 +285,12 @@ def process_transcription(lesson_id):
             lesson.transcription_error = None
             lesson.save(update_fields=['transcript', 'transcription_status', 'transcribed_at', 'transcription_error'])
             logger.info(f"Transcription successfully completed for Lesson ID: {lesson_id}")
+            try:
+                from ai_features.content_generator import generate_lesson_content
+                logger.info(f"Triggering AI content generation for Lesson ID: {lesson_id}")
+                generate_lesson_content(lesson_id)
+            except Exception as e:
+                logger.error(f"Failed to start AI generation: {str(e)}")
         else:
             # Failure path
             _mark_failed(lesson, f"Whisper API failed after {max_retries} attempts. Last error: {last_error}")

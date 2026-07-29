@@ -17,7 +17,16 @@ class Course(models.Model):
     """
     title = models.CharField(max_length=255, null=False, blank=False)
     description = models.TextField()
+    category = models.CharField(max_length=100, default='General')
+    difficulty = models.CharField(max_length=50, choices=[('Beginner', 'Beginner'), ('Intermediate', 'Intermediate'), ('Advanced', 'Advanced')], default='Beginner')
+    language = models.CharField(max_length=50, default='English')
     thumbnail = models.ImageField(upload_to='courses/thumbnails/', null=True, blank=True)
+    banner = models.ImageField(upload_to='courses/banners/', null=True, blank=True)
+    duration = models.CharField(max_length=50, blank=True, help_text="e.g., 10 Hours")
+    prerequisites = models.TextField(blank=True)
+    learning_outcomes = models.TextField(blank=True)
+    tags = models.CharField(max_length=255, blank=True, help_text="Comma separated tags")
+    status = models.CharField(max_length=20, choices=[('Draft', 'Draft'), ('Published', 'Published'), ('Archived', 'Archived')], default='Draft')
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_courses')
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -51,6 +60,12 @@ class Lesson(models.Model):
     )
     transcribed_at = models.DateTimeField(null=True, blank=True)
     transcription_error = models.TextField(null=True, blank=True)
+    
+    # AI Generated Fields
+    ai_summary = models.TextField(blank=True, null=True)
+    ai_key_concepts = models.JSONField(default=list, blank=True, null=True)
+    ai_flashcards = models.JSONField(default=list, blank=True, null=True)
+    ai_keywords = models.JSONField(default=list, blank=True, null=True)
 
     class Meta:
         ordering = ['lesson_order']
@@ -102,18 +117,86 @@ class Lesson(models.Model):
             from ai_features.transcription_service import trigger_transcription
             transaction.on_commit(lambda: trigger_transcription(self.id))
 
+class LessonResource(models.Model):
+    RESOURCE_TYPES = [
+        ('pdf', 'PDF'), ('ppt', 'PowerPoint'), ('doc', 'Word Document'),
+        ('image', 'Image'), ('zip', 'ZIP File'), ('other', 'Other')
+    ]
+    lesson = models.ForeignKey(Lesson, related_name='resources', on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    file = models.FileField(upload_to='lessons/resources/')
+    resource_type = models.CharField(max_length=20, choices=RESOURCE_TYPES, default='other')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+class LiveClass(models.Model):
+    course = models.ForeignKey(Course, related_name='live_classes', on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    meeting_link = models.URLField(max_length=500)
+    platform = models.CharField(max_length=50, choices=[('Zoom', 'Zoom'), ('Google Meet', 'Google Meet'), ('Microsoft Teams', 'Microsoft Teams'), ('Other', 'Other')], default='Zoom')
+    date = models.DateField()
+    time = models.TimeField()
+    duration = models.PositiveIntegerField(help_text="Duration in minutes")
+    max_students = models.PositiveIntegerField(default=100)
+    status = models.CharField(max_length=20, choices=[('Scheduled', 'Scheduled'), ('Ongoing', 'Ongoing'), ('Completed', 'Completed'), ('Cancelled', 'Cancelled')], default='Scheduled')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} - {self.date}"
+
+class Assignment(models.Model):
+    course = models.ForeignKey(Course, related_name='assignments', on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    deadline = models.DateTimeField()
+    max_marks = models.PositiveIntegerField(default=100)
+    late_submission_rules = models.TextField(blank=True)
+    auto_close = models.BooleanField(default=False)
+    question_paper = models.FileField(upload_to='assignments/questions/', null=True, blank=True)
+    dataset = models.FileField(upload_to='assignments/datasets/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+class AssignmentSubmission(models.Model):
+    assignment = models.ForeignKey(Assignment, related_name='submissions', on_delete=models.CASCADE)
+    student = models.ForeignKey(User, related_name='assignment_submissions', on_delete=models.CASCADE)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    file = models.FileField(upload_to='assignments/submissions/')
+    score = models.PositiveIntegerField(null=True, blank=True)
+    feedback = models.TextField(blank=True)
+
+    class Meta:
+        unique_together = ('assignment', 'student')
+
 class Quiz(models.Model):
     lesson = models.OneToOneField(Lesson, related_name='quiz', on_delete=models.CASCADE)
     title = models.CharField(max_length=255, default="Practice Quiz")
     pass_percentage = models.PositiveIntegerField(default=80)
+    time_limit = models.PositiveIntegerField(default=0, help_text="Time limit in minutes, 0 means unlimited")
+    negative_marking = models.BooleanField(default=False)
+    shuffle_questions = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Quiz for {self.lesson.title}"
 
 class QuizQuestion(models.Model):
+    QUESTION_TYPES = [
+        ('MCQ', 'Multiple Choice'),
+        ('MA', 'Multiple Answer'),
+        ('TF', 'True/False'),
+        ('FIB', 'Fill in Blank'),
+        ('SA', 'Short Answer'),
+        ('CODE', 'Coding Question'),
+        ('IMG', 'Image Question'),
+    ]
     quiz = models.ForeignKey(Quiz, related_name='questions', on_delete=models.CASCADE)
     question = models.CharField(max_length=512)
+    question_type = models.CharField(max_length=10, choices=QUESTION_TYPES, default='MCQ')
     options = models.JSONField(default=list)
     correct_answer = models.CharField(max_length=255)
     explanation = models.TextField(blank=True)

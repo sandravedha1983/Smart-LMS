@@ -7,12 +7,13 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import action
-from .models import Course, Lesson, Progress, Quiz, QuizQuestion, QuizAttempt, UserProfile, Certificate, PuzzleChallenge, PuzzleProgress, Achievement, UserAchievement
+from .models import Course, Lesson, Progress, Quiz, QuizQuestion, QuizAttempt, UserProfile, Certificate, PuzzleChallenge, PuzzleProgress, Achievement, UserAchievement, LessonResource, LiveClass, Assignment, AssignmentSubmission
 from .serializers import (
     CourseSerializer, LessonSerializer, ProgressSerializer, UserSerializer,
     QuizQuestionSerializer, QuizAttemptSerializer, ProfileUpdateSerializer,
     CertificateSerializer, PuzzleChallengeSerializer, PuzzleProgressSerializer,
-    UserAchievementSerializer, ProfessorRequestSerializer
+    UserAchievementSerializer, ProfessorRequestSerializer,
+    LessonResourceSerializer, LiveClassSerializer, AssignmentSerializer
 )
 
 class IsAdminOrReadOnly(permissions.BasePermission):
@@ -489,3 +490,59 @@ class LessonRetryTranscriptionView(APIView):
         
         serializer = LessonSerializer(lesson, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class LiveClassListCreateView(generics.ListCreateAPIView):
+    serializer_class = LiveClassSerializer
+    permission_classes = [IsProfessorOrAdminOrReadOnly]
+    def get_queryset(self):
+        qs = LiveClass.objects.all()
+        if self.request.user.is_authenticated and self.request.query_params.get('owned') == 'true':
+            qs = qs.filter(course__created_by=self.request.user)
+        return qs
+
+class LiveClassDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = LiveClass.objects.all()
+    serializer_class = LiveClassSerializer
+    permission_classes = [IsProfessorOrAdminOrReadOnly]
+
+class AssignmentListCreateView(generics.ListCreateAPIView):
+    serializer_class = AssignmentSerializer
+    permission_classes = [IsProfessorOrAdminOrReadOnly]
+    def get_queryset(self):
+        qs = Assignment.objects.all()
+        if self.request.user.is_authenticated and self.request.query_params.get('owned') == 'true':
+            qs = qs.filter(course__created_by=self.request.user)
+        return qs
+
+class AssignmentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Assignment.objects.all()
+    serializer_class = AssignmentSerializer
+    permission_classes = [IsProfessorOrAdminOrReadOnly]
+
+class LessonResourceListCreateView(generics.ListCreateAPIView):
+    serializer_class = LessonResourceSerializer
+    permission_classes = [IsProfessorOrAdminOrReadOnly]
+    def get_queryset(self):
+        qs = LessonResource.objects.all()
+        lesson_id = self.request.query_params.get('lesson')
+        if lesson_id:
+            qs = qs.filter(lesson_id=lesson_id)
+        return qs
+    def perform_create(self, serializer):
+        serializer.save()
+
+class ProfessorAnalyticsView(APIView):
+    permission_classes = [permissions.IsAuthenticated, IsProfessorOrAdminOrReadOnly]
+    def get(self, request):
+        courses = Course.objects.filter(created_by=request.user)
+        total_courses = courses.count()
+        total_lessons = Lesson.objects.filter(course__in=courses).count()
+        
+        # Approximate students enrolled based on progress records
+        students_enrolled = User.objects.filter(progress__lesson__course__in=courses).distinct().count()
+        
+        return Response({
+            'total_courses': total_courses,
+            'total_lessons': total_lessons,
+            'students_enrolled': students_enrolled,
+        })

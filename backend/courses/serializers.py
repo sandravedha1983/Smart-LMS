@@ -3,7 +3,8 @@ from django.contrib.auth.models import User
 from .models import (
     Course, Lesson, Progress, Quiz, QuizQuestion, QuizAttempt,
     UserProfile, Certificate, PuzzleChallenge, PuzzleProgress,
-    Achievement, UserAchievement
+    Achievement, UserAchievement, LessonResource, LiveClass,
+    Assignment, AssignmentSubmission
 )
 
 class AchievementSerializer(serializers.ModelSerializer):
@@ -92,12 +93,18 @@ class QuizAttemptSerializer(serializers.ModelSerializer):
         fields = ('id', 'quiz', 'score', 'total_questions', 'passed', 'created_at')
         read_only_fields = ('user',)
 
+class LessonResourceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LessonResource
+        fields = '__all__'
+
 class LessonSerializer(serializers.ModelSerializer):
     course_title = serializers.CharField(source='course.title', read_only=True)
     quiz_questions = serializers.SerializerMethodField()
     quiz_id = serializers.SerializerMethodField()
     best_quiz_score = serializers.SerializerMethodField()
     user_progress = serializers.SerializerMethodField()
+    resources = LessonResourceSerializer(many=True, read_only=True)
 
     class Meta:
         model = Lesson
@@ -132,15 +139,27 @@ class LessonSerializer(serializers.ModelSerializer):
                 }
         return {'completed': False, 'watched_percentage': 0.0}
 
+class LiveClassSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LiveClass
+        fields = '__all__'
+
+class AssignmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Assignment
+        fields = '__all__'
+
 class CourseSerializer(serializers.ModelSerializer):
     lessons = serializers.SerializerMethodField()
     completion_percentage = serializers.SerializerMethodField()
     owner = serializers.CharField(source='created_by.username', read_only=True)
     owner_id = serializers.IntegerField(source='created_by.id', read_only=True)
+    live_classes = LiveClassSerializer(many=True, read_only=True)
+    assignments = AssignmentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Course
-        fields = ('id', 'title', 'description', 'thumbnail', 'created_at', 'lessons', 'completion_percentage', 'owner', 'owner_id')
+        fields = '__all__'
 
     def get_lessons(self, obj):
         request = self.context.get('request')

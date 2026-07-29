@@ -4,7 +4,9 @@ from .views import (
     RegisterView, ProfileDetailView, PendingProfessorsView, ApproveProfessorView,
     CourseListCreateView, CourseDetailView, LessonListCreateView, LessonDetailView,
     LessonQuizView, QuizQuestionDetailView, QuizAttemptCreateView, ProgressListCreateView, CertificateDetailView,
-    PuzzleListView, PuzzleSolveView, AdminAnalyticsView, UserAchievementListView, LessonRetryTranscriptionView
+    PuzzleListView, PuzzleSolveView, AdminAnalyticsView, UserAchievementListView, LessonRetryTranscriptionView,
+    LiveClassListCreateView, LiveClassDetailView, AssignmentListCreateView, AssignmentDetailView,
+    LessonResourceListCreateView, ProfessorAnalyticsView
 )
 
 urlpatterns = [
@@ -37,4 +39,12 @@ urlpatterns = [
     path('puzzles/<int:puzzle_id>/solve/', PuzzleSolveView.as_view(), name='puzzle-solve'),
     path('achievements/', UserAchievementListView.as_view(), name='achievement-list'),
     path('admin/analytics/', AdminAnalyticsView.as_view(), name='admin-analytics'),
+
+    # Professor & Additional Modules Endpoints
+    path('live-classes/', LiveClassListCreateView.as_view(), name='live-class-list'),
+    path('live-classes/<int:pk>/', LiveClassDetailView.as_view(), name='live-class-detail'),
+    path('assignments/', AssignmentListCreateView.as_view(), name='assignment-list'),
+    path('assignments/<int:pk>/', AssignmentDetailView.as_view(), name='assignment-detail'),
+    path('resources/', LessonResourceListCreateView.as_view(), name='resource-list'),
+    path('professor/analytics/', ProfessorAnalyticsView.as_view(), name='professor-analytics'),
 ]
