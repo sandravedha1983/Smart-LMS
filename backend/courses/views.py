@@ -34,6 +34,29 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny]
 
+class SetupAdminView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        from django.contrib.auth.models import User
+        from .models import UserProfile
+        if User.objects.filter(is_superuser=True).exists():
+            # Already set up
+            # Check if admin user exists, just return ok
+            return Response({'detail': 'Admin setup already completed.'})
+        
+        # Create admin
+        admin_user = User.objects.create_superuser('admin', 'admin@example.com', 'admin123')
+        profile, _ = UserProfile.objects.get_or_create(user=admin_user)
+        profile.role = 'admin'
+        profile.approved = True
+        profile.save()
+        
+        # Auto-approve all existing professors
+        UserProfile.objects.filter(role='professor').update(approved=True)
+
+        return Response({'detail': 'Admin account created successfully (username: admin, password: admin123). All professors approved.'})
+
 class ProfileDetailView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 

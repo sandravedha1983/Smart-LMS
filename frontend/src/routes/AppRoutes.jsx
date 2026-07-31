@@ -16,9 +16,16 @@ import AchievementDashboardPage from '../pages/AchievementDashboardPage';
 export default function AppRoutes() {
   const { isAuthenticated, profile } = useAuth();
 
+  // Determine the correct dashboard path based on user role
+  const getDashboardPath = () => {
+    if (profile?.role === 'professor') return '/professor';
+    if (profile?.role === 'admin') return '/admin';
+    return '/dashboard';
+  };
+
   return (
     <Routes>
-      <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
+      <Route path="/" element={isAuthenticated ? <Navigate to={getDashboardPath()} replace /> : <LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />

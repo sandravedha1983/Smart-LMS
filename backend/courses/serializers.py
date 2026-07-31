@@ -78,7 +78,7 @@ class UserSerializer(serializers.ModelSerializer):
         profile.role = role
         profile.preferred_language = preferred_language
         profile.preferred_difficulty = preferred_difficulty
-        profile.approved = True if role == 'student' else False
+        profile.approved = True  # Auto-approve all roles (including professors)
         profile.save()
         return user
 

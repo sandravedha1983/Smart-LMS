@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import (
-    RegisterView, ProfileDetailView, PendingProfessorsView, ApproveProfessorView,
+    RegisterView, SetupAdminView, ProfileDetailView, PendingProfessorsView, ApproveProfessorView,
     CourseListCreateView, CourseDetailView, LessonListCreateView, LessonDetailView,
     LessonQuizView, QuizQuestionDetailView, QuizAttemptCreateView, ProgressListCreateView, CertificateDetailView,
     PuzzleListView, PuzzleSolveView, AdminAnalyticsView, UserAchievementListView, LessonRetryTranscriptionView,
@@ -12,6 +12,7 @@ from .views import (
 urlpatterns = [
     # Auth Endpoints
     path('auth/register/', RegisterView.as_view(), name='register'),
+    path('auth/setup-admin/', SetupAdminView.as_view(), name='setup-admin'),
     path('auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/profile/', ProfileDetailView.as_view(), name='profile'),

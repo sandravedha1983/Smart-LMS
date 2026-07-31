@@ -58,3 +58,42 @@ export const retryLessonTranscription = async (lessonId) => {
   const response = await api.post(`/lessons/${lessonId}/retry-transcription/`);
   return response.data;
 };
+
+// --- Live Classes ---
+export const getLiveClasses = async (owned = true) => {
+  const query = owned ? '?owned=true' : '';
+  const response = await api.get(`/live-classes/${query}`);
+  return response.data?.results ?? [];
+};
+
+export const createLiveClass = async (data) => {
+  const response = await api.post('/live-classes/', data);
+  return response.data;
+};
+
+export const deleteLiveClass = async (id) => {
+  await api.delete(`/live-classes/${id}/`);
+};
+
+// --- Assignments ---
+export const getAssignments = async (owned = true) => {
+  const query = owned ? '?owned=true' : '';
+  const response = await api.get(`/assignments/${query}`);
+  return response.data?.results ?? [];
+};
+
+export const createAssignment = async (data) => {
+  // Use FormData if file uploads are included
+  const response = await api.post('/assignments/', data);
+  return response.data;
+};
+
+export const deleteAssignment = async (id) => {
+  await api.delete(`/assignments/${id}/`);
+};
+
+// --- Analytics ---
+export const getProfessorAnalytics = async () => {
+  const response = await api.get('/professor/analytics/');
+  return response.data;
+};

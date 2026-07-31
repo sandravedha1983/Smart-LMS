@@ -9,6 +9,13 @@ import {
   updateLesson,
   deleteLesson,
   getLessonQuiz,
+  getLiveClasses,
+  createLiveClass,
+  deleteLiveClass,
+  getAssignments,
+  createAssignment,
+  deleteAssignment,
+  getProfessorAnalytics
 } from '../services/courseService';
 import {
   addQuizQuestion,
@@ -578,6 +585,159 @@ function CourseManager({ course, onCourseUpdated, onBack }) {
   );
 }
 
+// ─── LIVE CLASSES TAB ──────────────────────────────────────────
+function LiveClassesTab({ courses }) {
+  const [liveClasses, setLiveClasses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ title: '', course: '', date: '', time: '', duration: 60, meeting_link: '' });
+  
+  useEffect(() => {
+    getLiveClasses().then(setLiveClasses).finally(() => setLoading(false));
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const created = await createLiveClass(form);
+      setLiveClasses([created, ...liveClasses]);
+      setForm({ title: '', course: '', date: '', time: '', duration: 60, meeting_link: '' });
+    } catch (err) {
+      alert("Failed to create live class");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete live class?")) return;
+    await deleteLiveClass(id);
+    setLiveClasses(liveClasses.filter(c => c.id !== id));
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl glass-card p-6 border border-white/10 shadow-glass">
+        <h3 className="text-xl font-bold text-white mb-4">Schedule Live Class</h3>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <input className={inputCls} placeholder="Class Title" value={form.title} onChange={e => setForm({...form, title: e.target.value})} required />
+          <select className={inputCls} value={form.course} onChange={e => setForm({...form, course: e.target.value})} required>
+            <option value="">Select Course</option>
+            {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+          </select>
+          <input type="date" className={inputCls} value={form.date} onChange={e => setForm({...form, date: e.target.value})} required />
+          <input type="time" className={inputCls} value={form.time} onChange={e => setForm({...form, time: e.target.value})} required />
+          <input type="number" className={inputCls} placeholder="Duration (mins)" value={form.duration} onChange={e => setForm({...form, duration: e.target.value})} required />
+          <input type="url" className={inputCls} placeholder="Meeting Link (Zoom/Meet)" value={form.meeting_link} onChange={e => setForm({...form, meeting_link: e.target.value})} required />
+          <button type="submit" className={btnPrimary + ' sm:col-span-2'}>Schedule Class</button>
+        </form>
+      </div>
+      
+      <div className="space-y-3">
+        {loading ? <Loader label="Loading classes..." /> : liveClasses.map(lc => (
+          <div key={lc.id} className="rounded-2xl border border-white/10 bg-white/5 p-4 flex justify-between items-center">
+            <div>
+              <h4 className="font-bold text-white">{lc.title}</h4>
+              <p className="text-xs text-white/60">{lc.date} at {lc.time} ({lc.duration} mins) - Course ID: {lc.course}</p>
+              <a href={lc.meeting_link} target="_blank" rel="noreferrer" className="text-xs text-sky-400 hover:underline">Join Link</a>
+            </div>
+            <button onClick={() => handleDelete(lc.id)} className={btnDanger + ' text-xs'}>Delete</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── ASSIGNMENTS TAB ───────────────────────────────────────────
+function AssignmentsTab({ courses }) {
+  const [assignments, setAssignments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ title: '', course: '', description: '', deadline: '', max_marks: 100 });
+  
+  useEffect(() => {
+    getAssignments().then(setAssignments).finally(() => setLoading(false));
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      // For DateTimeField, we combine a date input or just use datetime-local
+      const created = await createAssignment(form);
+      setAssignments([created, ...assignments]);
+      setForm({ title: '', course: '', description: '', deadline: '', max_marks: 100 });
+    } catch (err) {
+      alert("Failed to create assignment");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete assignment?")) return;
+    await deleteAssignment(id);
+    setAssignments(assignments.filter(a => a.id !== id));
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl glass-card p-6 border border-white/10 shadow-glass">
+        <h3 className="text-xl font-bold text-white mb-4">Create Assignment</h3>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <input className={inputCls} placeholder="Assignment Title" value={form.title} onChange={e => setForm({...form, title: e.target.value})} required />
+          <select className={inputCls} value={form.course} onChange={e => setForm({...form, course: e.target.value})} required>
+            <option value="">Select Course</option>
+            {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+          </select>
+          <textarea className={inputCls + ' sm:col-span-2'} placeholder="Description / Instructions" value={form.description} onChange={e => setForm({...form, description: e.target.value})} required />
+          <input type="datetime-local" className={inputCls} value={form.deadline} onChange={e => setForm({...form, deadline: e.target.value})} required />
+          <input type="number" className={inputCls} placeholder="Max Marks" value={form.max_marks} onChange={e => setForm({...form, max_marks: e.target.value})} required />
+          <button type="submit" className={btnPrimary + ' sm:col-span-2'}>Publish Assignment</button>
+        </form>
+      </div>
+      
+      <div className="space-y-3">
+        {loading ? <Loader label="Loading assignments..." /> : assignments.map(a => (
+          <div key={a.id} className="rounded-2xl border border-white/10 bg-white/5 p-4 flex justify-between items-center">
+            <div>
+              <h4 className="font-bold text-white">{a.title}</h4>
+              <p className="text-xs text-white/60">Due: {new Date(a.deadline).toLocaleString()} | Marks: {a.max_marks}</p>
+              <p className="text-sm text-white/80 mt-1 line-clamp-2">{a.description}</p>
+            </div>
+            <button onClick={() => handleDelete(a.id)} className={btnDanger + ' text-xs'}>Delete</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── ANALYTICS TAB ─────────────────────────────────────────────
+function AnalyticsTab() {
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getProfessorAnalytics().then(setStats).finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <Loader label="Loading analytics..." />;
+  if (!stats) return <p className="text-white/60">Could not load analytics.</p>;
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="rounded-2xl border border-sky-500/30 bg-sky-500/10 p-6 text-center shadow-glass backdrop-blur-md">
+        <p className="text-4xl font-bold text-sky-400">{stats.total_courses}</p>
+        <p className="text-sm uppercase tracking-wider text-sky-200 mt-2">Total Courses</p>
+      </div>
+      <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-center shadow-glass backdrop-blur-md">
+        <p className="text-4xl font-bold text-emerald-400">{stats.total_lessons}</p>
+        <p className="text-sm uppercase tracking-wider text-emerald-200 mt-2">Total Lessons</p>
+      </div>
+      <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6 text-center shadow-glass backdrop-blur-md">
+        <p className="text-4xl font-bold text-amber-400">{stats.students_enrolled}</p>
+        <p className="text-sm uppercase tracking-wider text-amber-200 mt-2">Est. Students Enrolled</p>
+      </div>
+    </div>
+  );
+}
+
+
 // ─── MAIN PAGE ─────────────────────────────────────────────────
 export default function ProfessorDashboardPage() {
   const [courses, setCourses] = useState([]);
@@ -585,6 +745,7 @@ export default function ProfessorDashboardPage() {
   const [error, setError] = useState('');
   const [managingCourse, setManagingCourse] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('courses');
 
   const loadCourses = useCallback(async () => {
     setLoading(true);
@@ -612,8 +773,6 @@ export default function ProfessorDashboardPage() {
     setManagingCourse(updated);
   };
 
-  // Called when "back" is pressed from CourseManager
-  // If courseId is provided, it was deleted → remove from list
   const handleBack = (deletedCourseId) => {
     if (deletedCourseId) {
       setCourses((cs) => cs.filter((c) => c.id !== deletedCourseId));
@@ -636,111 +795,105 @@ export default function ProfessorDashboardPage() {
     );
   }
 
-  // ── Course List View ──
+  const tabClasses = (tabName) => `px-4 py-2 text-sm font-semibold rounded-xl transition ${
+    activeTab === tabName 
+      ? 'bg-sky-500 text-white shadow-glow' 
+      : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+  }`;
+
+  // ── Dashboard View ──
   return (
-    <section className="space-y-8">
+    <section className="space-y-6">
       <div className="rounded-2xl sm:rounded-[2rem] glass-card p-4 sm:p-8 shadow-glass">
         {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-3 sm:gap-4 mb-5 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-3 sm:gap-4 mb-6">
           <div className="flex-1">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">Professor Dashboard</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">Professor Command Center</h1>
             <p className="mt-1 text-sm text-white/60">
-              Create and manage your courses, lessons, transcripts, and quizzes from one place.
+              Manage your courses, schedule live classes, assign work, and track performance.
             </p>
           </div>
-          <button onClick={() => setShowCreateModal(true)} className={btnPrimary + ' w-full sm:w-auto justify-center'}>
-            + New Course
-          </button>
         </div>
 
-        {/* Stats Strip */}
-        <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-5 sm:mb-8">
-          {[
-            { label: 'Courses', value: courses.length },
-            {
-              label: 'Total Lessons',
-              value: courses.reduce((sum, c) => sum + (c.lessons?.length ?? 0), 0),
-            },
-            {
-              label: 'With Quizzes',
-              value: courses.reduce(
-                (sum, c) =>
-                  sum + (c.lessons?.filter((l) => l.quiz_questions?.length > 0).length ?? 0),
-                0
-              ),
-            },
-            { label: 'Published', value: courses.length },
-          ].map((stat) => (
-            <div key={stat.label} className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center backdrop-blur-sm">
-              <p className="text-3xl font-bold text-sky-400">{stat.value}</p>
-              <p className="text-xs uppercase tracking-wider text-white/50 mt-1">{stat.label}</p>
+        {/* Tabs */}
+        <div className="flex flex-wrap gap-2 mb-8 p-1 bg-white/5 rounded-2xl border border-white/10 inline-flex">
+          <button onClick={() => setActiveTab('courses')} className={tabClasses('courses')}>Courses</button>
+          <button onClick={() => setActiveTab('live_classes')} className={tabClasses('live_classes')}>Live Classes</button>
+          <button onClick={() => setActiveTab('assignments')} className={tabClasses('assignments')}>Assignments</button>
+          <button onClick={() => setActiveTab('analytics')} className={tabClasses('analytics')}>Analytics</button>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'courses' && (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold text-white">Your Courses</h2>
+              <button onClick={() => setShowCreateModal(true)} className={btnPrimary + ' text-xs'}>
+                + New Course
+              </button>
             </div>
-          ))}
-        </div>
+            {loading ? (
+              <Loader label="Loading your courses…" />
+            ) : error ? (
+              <p className="text-rose-600 text-sm">{error}</p>
+            ) : courses.length === 0 ? (
+              <div className="rounded-3xl border-2 border-dashed border-white/15 p-12 text-center bg-white/3 space-y-3">
+                <p className="text-4xl">📚</p>
+                <p className="font-semibold text-white/80">No courses yet</p>
+                <p className="text-sm text-white/50">Click "New Course" to create your first course.</p>
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+                {courses.map((course) => {
+                  const lessonCount = course.lessons?.length ?? 0;
+                  const quizCount = course.lessons?.filter((l) => l.quiz_questions?.length > 0).length ?? 0;
+                  const hasTranscript = course.lessons?.some((l) => l.transcript) ?? false;
+                  const hasVideo = course.lessons?.some((l) => l.video_url) ?? false;
+                  const isReady = lessonCount > 0 && hasVideo && hasTranscript && quizCount > 0;
 
-        {/* Course Cards */}
-        {loading ? (
-          <Loader label="Loading your courses…" />
-        ) : error ? (
-          <p className="text-rose-600 text-sm">{error}</p>
-        ) : courses.length === 0 ? (
-          <div className="rounded-3xl border-2 border-dashed border-white/15 p-12 text-center bg-white/3 space-y-3">
-            <p className="text-4xl">📚</p>
-            <p className="font-semibold text-white/80">No courses yet</p>
-            <p className="text-sm text-white/50">Click "New Course" to create your first course.</p>
-          </div>
-        ) : (
-          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-            {courses.map((course) => {
-              const lessonCount = course.lessons?.length ?? 0;
-              const quizCount = course.lessons?.filter((l) => l.quiz_questions?.length > 0).length ?? 0;
-              const hasTranscript = course.lessons?.some((l) => l.transcript) ?? false;
-              const hasVideo = course.lessons?.some((l) => l.video_url) ?? false;
-              const isReady = lessonCount > 0 && hasVideo && hasTranscript && quizCount > 0;
-
-              return (
-                <div
-                  key={course.id}
-                  className="rounded-3xl border border-white/10 bg-white/5 shadow-glass hover:bg-white/10 transition-all duration-200 p-5 flex flex-col gap-4"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-bold text-white leading-snug">{course.title}</h3>
-                      <p className="mt-1 text-sm text-white/60 line-clamp-2">{course.description}</p>
+                  return (
+                    <div
+                      key={course.id}
+                      className="rounded-3xl border border-white/10 bg-white/5 shadow-glass hover:bg-white/10 transition-all duration-200 p-5 flex flex-col gap-4"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-base font-bold text-white leading-snug">{course.title}</h3>
+                          <p className="mt-1 text-sm text-white/60 line-clamp-2">{course.description}</p>
+                        </div>
+                        {isReady && (
+                          <span className="shrink-0 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-semibold px-2.5 py-1">
+                            Ready
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 text-xs">
+                        <span className="rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 px-2.5 py-0.5 font-medium">
+                          {lessonCount} lesson{lessonCount !== 1 ? 's' : ''}
+                        </span>
+                        {quizCount > 0 && (
+                          <span className="rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5">
+                            ✓ Quiz
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => setManagingCourse(course)}
+                        className={btnPrimary + ' w-full justify-center'}
+                      >
+                        Manage Course →
+                      </button>
                     </div>
-                    {isReady && (
-                      <span className="shrink-0 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-semibold px-2.5 py-1">
-                        Ready
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 text-xs">
-                    <span className="rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 px-2.5 py-0.5 font-medium">
-                      {lessonCount} lesson{lessonCount !== 1 ? 's' : ''}
-                    </span>
-                    {hasVideo && (
-                      <span className="rounded-full bg-white/10 text-white/80 px-2.5 py-0.5">🎬 Video</span>
-                    )}
-                    {hasTranscript && (
-                      <span className="rounded-full bg-white/10 text-white/80 px-2.5 py-0.5">📄 Transcript</span>
-                    )}
-                    {quizCount > 0 && (
-                      <span className="rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5">
-                        ✓ Quiz
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => setManagingCourse(course)}
-                    className={btnPrimary + ' w-full justify-center'}
-                  >
-                    Manage Course →
-                  </button>
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
+
+        {activeTab === 'live_classes' && <LiveClassesTab courses={courses} />}
+        {activeTab === 'assignments' && <AssignmentsTab courses={courses} />}
+        {activeTab === 'analytics' && <AnalyticsTab />}
       </div>
 
       {showCreateModal && (

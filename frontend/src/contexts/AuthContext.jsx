@@ -37,8 +37,10 @@ export function AuthProvider({ children }) {
     try {
       const profileData = await getProfile();
       setProfile(profileData);
+      return profileData;
     } catch (err) {
       console.warn('Failed to load profile', err);
+      return null;
     }
   };
 
@@ -50,8 +52,16 @@ export function AuthProvider({ children }) {
       setTokens(data.access, data.refresh);
       setAccessTokenState(data.access);
       setRefreshTokenState(data.refresh);
-      await fetchProfile();
-      navigate('/dashboard');
+      const profileData = await fetchProfile();
+      // Redirect based on role
+      const role = profileData?.role;
+      if (role === 'professor') {
+        navigate('/professor');
+      } else if (role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       setError(err?.response?.data?.detail || 'Login failed. Check credentials.');
       throw err;
