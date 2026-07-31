@@ -21,8 +21,12 @@ export default function MobileDrawer({ open, onClose, isAuthenticated, logout, p
               {isAuthenticated && (
                 <>
                   <Link to="/dashboard" onClick={onClose} className="text-white font-medium hover:text-sky-400 transition">Dashboard</Link>
-                  <Link to="/achievements" onClick={onClose} className="text-white font-medium hover:text-sky-400 transition">Achievements</Link>
-                  <Link to="/puzzles" onClick={onClose} className="text-white font-medium hover:text-sky-400 transition">Puzzle Zone</Link>
+                  {profile?.role !== 'professor' && (
+                    <>
+                      <Link to="/achievements" onClick={onClose} className="text-white font-medium hover:text-sky-400 transition">Achievements</Link>
+                      <Link to="/puzzles" onClick={onClose} className="text-white font-medium hover:text-sky-400 transition">Puzzle Zone</Link>
+                    </>
+                  )}
                   {profile?.role === 'professor' && (
                     <Link to="/professor" onClick={onClose} className="text-sky-400 font-medium hover:text-sky-300 transition">Professor Portal</Link>
                   )}
