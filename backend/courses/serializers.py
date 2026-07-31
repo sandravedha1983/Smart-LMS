@@ -72,6 +72,11 @@ class UserSerializer(serializers.ModelSerializer):
             email=validated_data.get('email', ''),
             password=validated_data['password']
         )
+        
+        # Mark user as inactive until they verify email
+        user.is_active = False
+        user.save()
+
         profile = getattr(user, 'profile', None)
         if profile is None:
             profile = UserProfile.objects.create(user=user)
@@ -80,6 +85,37 @@ class UserSerializer(serializers.ModelSerializer):
         profile.preferred_difficulty = preferred_difficulty
         profile.approved = True  # Auto-approve all roles (including professors)
         profile.save()
+
+        # Send Verification Email
+        from django.contrib.auth.tokens import default_token_generator
+        from django.utils.http import urlsafe_base64_encode
+        from django.utils.encoding import force_bytes
+        from django.core.mail import send_mail
+        from django.conf import settings
+        
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        
+        # We need a frontend URL here. Since Render domain is fixed, we'll use a dynamic approach if possible,
+        # but for simplicity we will hardcode the Vercel/Render frontend URL or assume it runs on localhost during dev.
+        # It's better to pass it from frontend or use a default.
+        request = self.context.get('request')
+        frontend_url = request.META.get('HTTP_ORIGIN', 'https://smart-lms-kq6g.onrender.com') if request else 'https://smart-lms-kq6g.onrender.com'
+        
+        verification_link = f"{frontend_url}/verify-email/{uid}/{token}"
+        
+        try:
+            send_mail(
+                'Verify your Smart Learning account',
+                f'Hello {user.username},\n\nPlease click the link below to verify your email address and activate your account:\n\n{verification_link}\n\nThank you!',
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=True,
+            )
+        except Exception as e:
+            import logging
+            logging.error(f"Failed to send email: {e}")
+
         return user
 
 class QuizQuestionSerializer(serializers.ModelSerializer):

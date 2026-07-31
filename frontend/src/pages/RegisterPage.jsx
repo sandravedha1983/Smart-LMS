@@ -25,7 +25,7 @@ export default function RegisterPage() {
 
     try {
       await register(form);
-      setSuccess('Registration successful. Please log in.');
+      setSuccess(`✅ Registration successful! A verification email has been sent to ${form.email}. Please check your inbox (and spam folder) and click the link to activate your account.`);
     } catch (err) {
       let errMessage = 'Registration failed. Please try again.';
       if (err?.response?.data) {

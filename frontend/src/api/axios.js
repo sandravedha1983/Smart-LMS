@@ -21,7 +21,15 @@ api.interceptors.request.use((config) => {
   // When sending FormData (file uploads), remove Content-Type
   // so the browser can set the correct multipart/form-data boundary
   if (config.data instanceof FormData) {
-    delete config.headers['Content-Type'];
+    if (config.headers) {
+      if (typeof config.headers.delete === 'function') {
+        config.headers.delete('Content-Type');
+        config.headers.delete('content-type');
+      } else {
+        delete config.headers['Content-Type'];
+        delete config.headers['content-type'];
+      }
+    }
   }
 
   // Debugging: Log the final URL being requested

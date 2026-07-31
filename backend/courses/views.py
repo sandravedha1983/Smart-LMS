@@ -34,6 +34,30 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny]
 
+class VerifyEmailView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, uid, token):
+        from django.utils.http import urlsafe_base64_decode
+        from django.utils.encoding import force_str
+        from django.contrib.auth.tokens import default_token_generator
+        from django.contrib.auth.models import User as DjangoUser
+        try:
+            user_id = force_str(urlsafe_base64_decode(uid))
+            user = DjangoUser.objects.get(pk=user_id)
+        except (TypeError, ValueError, OverflowError, DjangoUser.DoesNotExist):
+            return Response({'detail': 'Invalid verification link.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not default_token_generator.check_token(user, token):
+            return Response({'detail': 'Verification link is invalid or has expired.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if user.is_active:
+            return Response({'detail': 'Account is already verified. Please log in.'}, status=status.HTTP_200_OK)
+
+        user.is_active = True
+        user.save()
+        return Response({'detail': 'Email verified successfully! You can now log in.'}, status=status.HTTP_200_OK)
+
 class SetupAdminView(APIView):
     permission_classes = [permissions.AllowAny]
 

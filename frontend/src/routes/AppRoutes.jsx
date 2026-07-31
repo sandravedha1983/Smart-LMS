@@ -12,6 +12,7 @@ import AdminDashboardPage from '../pages/AdminDashboardPage';
 import PuzzleZonePage from '../pages/PuzzleZonePage';
 import CertificatePage from '../pages/CertificatePage';
 import AchievementDashboardPage from '../pages/AchievementDashboardPage';
+import VerifyEmailPage from '../pages/VerifyEmailPage';
 
 export default function AppRoutes() {
   const { isAuthenticated, profile } = useAuth();
@@ -28,6 +29,7 @@ export default function AppRoutes() {
       <Route path="/" element={isAuthenticated ? <Navigate to={getDashboardPath()} replace /> : <LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/verify-email/:uid/:token" element={<VerifyEmailPage />} />
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/professor" element={<ProtectedRoute>{profile?.role === 'professor' ? <ProfessorDashboardPage /> : <DashboardPage />}</ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute>{profile?.role === 'admin' ? <AdminDashboardPage /> : <DashboardPage />}</ProtectedRoute>} />
