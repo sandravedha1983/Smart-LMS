@@ -20,11 +20,11 @@ export default function Navbar() {
           </Link>
           {isAuthenticated ? (
             <>
-              <Link className="rounded-full border border-[rgba(255,255,255,0.06)] px-4 py-2 text-sm font-medium transition hover:bg-white/5" to="/dashboard">
-                Dashboard
-              </Link>
               {profile?.role !== 'professor' && (
                 <>
+                  <Link className="rounded-full border border-[rgba(255,255,255,0.06)] px-4 py-2 text-sm font-medium transition hover:bg-white/5" to="/dashboard">
+                    Dashboard
+                  </Link>
                   <Link className="rounded-full border border-[rgba(255,255,255,0.06)] px-4 py-2 text-sm font-medium transition hover:bg-white/5" to="/achievements">
                     Achievements
                   </Link>

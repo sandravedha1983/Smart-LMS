@@ -20,9 +20,9 @@ export default function MobileDrawer({ open, onClose, isAuthenticated, logout, p
               <Link to="/" onClick={onClose} className="text-white font-medium hover:text-sky-400 transition">Home</Link>
               {isAuthenticated && (
                 <>
-                  <Link to="/dashboard" onClick={onClose} className="text-white font-medium hover:text-sky-400 transition">Dashboard</Link>
                   {profile?.role !== 'professor' && (
                     <>
+                      <Link to="/dashboard" onClick={onClose} className="text-white font-medium hover:text-sky-400 transition">Dashboard</Link>
                       <Link to="/achievements" onClick={onClose} className="text-white font-medium hover:text-sky-400 transition">Achievements</Link>
                       <Link to="/puzzles" onClick={onClose} className="text-white font-medium hover:text-sky-400 transition">Puzzle Zone</Link>
                     </>
